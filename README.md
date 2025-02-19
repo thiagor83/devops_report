@@ -9,19 +9,15 @@ Sistema para análise e exportação de relatorios em excel para gerenciamento d
 
 ## 🛠️ Tecnologias Utilizadas
 - Backend:
-  - PHP 8.1
-  - Laravel 10.x
-  - MySQL
+  - PHP 7.4
   
 - Frontend:
-  - Blade Templates
-  - Bootstrap 5
   - JavaScript
+  - Tailwind CSS
   
 - Ferramentas:
   - Composer
   - Git
-  - VS Code
 
 ## ⚙️ Como Executar
 
