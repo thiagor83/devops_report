@@ -1,0 +1,31 @@
+{
+    "name": "devops-reports/app",
+    "description": "This project aims to extract reports from Azure DevOps, specifically related to development activity cards. By automating data retrieval, it provides insights into task progress, team performance, and workflow efficiency. The extracted reports help track project milestones, identify bottlenecks, and improve development processes by offering a structured view of work items, statuses, and timelines.",
+    "type": "project",
+    "require": {
+        "php": ">=7.4",
+        "nesbot/carbon": "^2.71",
+        "symfony/console": "^5.4",
+        "guzzlehttp/guzzle": "^7.8"
+    },
+    "autoload": {
+        "psr-4": {
+            "App\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Tests\\": "tests/"
+        }
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^9.5"
+    },
+    "config": {
+        "optimize-autoloader": true,
+        "preferred-install": "dist",
+        "sort-packages": true
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+} 
