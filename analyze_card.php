@@ -246,8 +246,8 @@ try {
                             $productivityAnalysis['dev_end'] = date('d/m/Y H:i', $date);
                         }
 
-                        // Detectar aprovação
-                        if ($newState === 'Aprovado (Teste)') {
+                        // Detectar aprovação (agora inclui Done)
+                        if ($newState === 'Aprovado (Teste)' || $newState === 'Done') {
                             $productivityAnalysis['is_approved'] = true;
                             $productivityAnalysis['total_approval_time'] = round(($date - strtotime($item['fields']['System.CreatedDate'])) / 3600, 2);
                         }
@@ -270,6 +270,7 @@ try {
                 'history' => $history,
                 'durations' => $durations,
                 'title' => $item['fields']['System.Title'] ?? 'Card não encontrado',
+                'description' => $item['fields']['System.Description'] ?? '',
                 'productivity' => $productivityAnalysis,
                 'debug' => $debug
             ]);

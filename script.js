@@ -157,15 +157,52 @@ function atualizarAnaliseProducao(data) {
     document.getElementById('totalApprovalTime').textContent = typeof data.productivity.total_approval_time === 'number' 
         ? `${data.productivity.total_approval_time} horas`
         : data.productivity.total_approval_time;
-    document.getElementById('cardTitle').textContent = data.title;
 
+    // Atualizar tempo de aprovação com formatação melhorada
     const approvalTimeElement = document.getElementById('totalApprovalTime');
     if (data.productivity.is_approved) {
+        const hours = data.productivity.total_approval_time;
+        const days = Math.floor(hours / 24);
+        const remainingHours = Math.floor(hours % 24);
+        const minutes = Math.round((hours - Math.floor(hours)) * 60);
+        
+        let formattedTime = '';
+        if (days > 0) {
+            formattedTime = `${days}d ${remainingHours}h ${minutes}m`;
+        } else {
+            formattedTime = `${remainingHours}h ${minutes}m`;
+        }
+        
+        approvalTimeElement.textContent = formattedTime;
         approvalTimeElement.classList.remove('text-yellow-600');
         approvalTimeElement.classList.add('text-purple-600');
     } else {
+        approvalTimeElement.textContent = 'Ainda não Aprovado';
         approvalTimeElement.classList.remove('text-purple-600');
         approvalTimeElement.classList.add('text-yellow-600');
+    }
+    
+    // Atualizar título e descrição do card
+    document.getElementById('cardTitle').textContent = data.title;
+    
+    // Processar e exibir a descrição
+    const descriptionElement = document.getElementById('cardDescription');
+    if (data.description) {
+        // Limitar a descrição a um número razoável de caracteres
+        let description = data.description;
+        if (description.length > 300) {
+            description = description.substring(0, 300) + '...';
+        }
+        
+        // Remover tags HTML se houver
+        description = description.replace(/<[^>]*>/g, '');
+        
+        // Substituir quebras de linha por <br>
+        description = description.replace(/\n/g, '<br>');
+        
+        descriptionElement.innerHTML = description;
+    } else {
+        descriptionElement.innerHTML = '<em class="text-gray-400">Sem descrição disponível</em>';
     }
 }
 
