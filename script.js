@@ -708,7 +708,7 @@ async function imprimirRelatorio() {
         pdf.setTextColor(75, 85, 99);
         pdf.setFont('helvetica', 'bold');
         pdf.setFontSize(12);
-        pdf.text('Resumo do Card', margin + 5, currentY + 8);
+        pdf.text('Resumo do Card', margin + 5, currentY + 10);
 
         // Título do card (ajustado espaçamento)
         pdf.setFontSize(11);
@@ -717,7 +717,7 @@ async function imprimirRelatorio() {
 
         // Quebrar texto do título em múltiplas linhas se necessário
         const title = pdf.splitTextToSize(document.getElementById('cardTitle').textContent, contentWidth - 15);
-        pdf.text(title, margin + 5, currentY + 30);
+        pdf.text(title, margin + 5, currentY + 25);
 
         // Ajustar posição Y após o resumo
         currentY += 70; // Aumentado de 50 para 70
@@ -726,7 +726,7 @@ async function imprimirRelatorio() {
         currentY -= 30; // Aumentado de 20 para 30mm
 
         // Seção: Análise de Tempo
-        if (currentY > pageHeight - 40) {
+        if (currentY > pageHeight - 60) {
             pdf.addPage();
             currentY = margin;
         }
@@ -767,18 +767,6 @@ async function imprimirRelatorio() {
         const chartImg = chartCanvas.toDataURL('image/png', 1.0);
         pdf.addImage(chartImg, 'PNG', margin, currentY, graphWidth, chartHeight);
         currentY += chartHeight + 15;
-
-        // Título do gráfico de pizza
-        pdf.setTextColor(75, 85, 99);
-        pdf.setFontSize(12);
-        pdf.setFont('helvetica', 'bold');
-        pdf.text('Distribuição do Tempo (%)', margin, currentY);
-        currentY += 8;
-
-        // Renderizar gráfico de pizza com proporção original
-        const pieImg = pieCanvas.toDataURL('image/png', 1.0);
-        pdf.addImage(pieImg, 'PNG', margin, currentY, graphWidth, pieHeight);
-        currentY += pieHeight + 15;
 
         // Verificar se há espaço suficiente para o histórico
         if (currentY + 100 > pageHeight - margin) {
