@@ -280,15 +280,27 @@ try {
             }
 
             // Incluir a análise de produtividade na resposta
-            echo json_encode([
+            $response = [
                 'success' => true,
-                'history' => $history,
-                'durations' => $durations,
                 'title' => $item['fields']['System.Title'] ?? 'Card não encontrado',
                 'description' => $item['fields']['System.Description'] ?? '',
-                'productivity' => $productivityAnalysis,
+                'status' => $item['fields']['System.State'],
+                'productivity' => [
+                    'created_date' => $productivityAnalysis['created_date'],
+                    'dev_start' => $productivityAnalysis['dev_start'],
+                    'dev_end' => $productivityAnalysis['dev_end'],
+                    'is_approved' => $productivityAnalysis['is_approved'],
+                    'total_dev_time' => $productivityAnalysis['total_dev_time'],
+                    'total_test_time' => $productivityAnalysis['total_test_time'],
+                    'total_approval_time' => $productivityAnalysis['total_approval_time'],
+                    'reproved_count' => $productivityAnalysis['reproved_count']
+                ],
+                'history' => $history,
+                'durations' => $durations,
                 'debug' => $debug
-            ]);
+            ];
+
+            echo json_encode($response);
         }
     } else {
         throw new Exception('Método HTTP não suportado. Use POST.');

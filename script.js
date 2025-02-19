@@ -348,15 +348,33 @@ function atualizarAnaliseProducao(data) {
     productivitySection.classList.remove('hidden');
     
     document.getElementById('createdDate').textContent = data.productivity.created_date;
-    document.getElementById('devStartDate').textContent = data.productivity.dev_start || 'N/A';
+    
+    // Atualizar data de início com texto mais amigável
+    const devStartDate = document.getElementById('devStartDate');
+    devStartDate.textContent = data.productivity.dev_start || 'Não Iniciado';
+    if (!data.productivity.dev_start) {
+        devStartDate.classList.add('text-yellow-600');
+    } else {
+        devStartDate.classList.remove('text-yellow-600');
+    }
     
     // Atualizar data de conclusão
     const devEndDate = document.getElementById('devEndDate');
-    if (data.productivity.is_approved) {
+    if (!data.productivity.dev_start) {
+        // Se não iniciou, mostrar "Não Concluído"
+        devEndDate.textContent = 'Não Concluído';
+        devEndDate.classList.add('text-yellow-600');
+        devEndDate.classList.remove('text-green-600');
+    } else if (data.productivity.is_approved) {
+        // Se está aprovado, mostrar data de conclusão
         devEndDate.textContent = data.productivity.dev_end || 'N/A';
+        devEndDate.classList.remove('text-yellow-600');
+        devEndDate.classList.add('text-green-600');
     } else {
+        // Se iniciou mas não concluiu, mostrar "Em Andamento"
         devEndDate.textContent = 'Em Andamento';
         devEndDate.classList.add('text-yellow-600');
+        devEndDate.classList.remove('text-green-600');
     }
 
     // Exibir contagem de reprovações
@@ -383,6 +401,34 @@ function atualizarAnaliseProducao(data) {
     
     // Atualizar título e descrição do card
     document.getElementById('cardTitle').textContent = data.title;
+    
+    // Atualizar status do card com cores correspondentes
+    const statusElement = document.getElementById('cardStatus');
+    const status = data.status || 'Desconhecido';
+    
+    // Definir cores para cada status
+    const statusColors = {
+        'New': 'bg-blue-100 text-blue-800',
+        'Active': 'bg-yellow-100 text-yellow-800',
+        'Em desenvolvimento': 'bg-purple-100 text-purple-800',
+        'Aprovado Desenvolvimento': 'bg-pink-100 text-pink-800',
+        'Liberado para Teste TI': 'bg-red-100 text-red-800',
+        'Liberado para Teste Usuário': 'bg-orange-100 text-orange-800',
+        'Aprovado (Teste)': 'bg-green-100 text-green-800',
+        'Liberado para Replicar': 'bg-cyan-100 text-cyan-800',
+        'Done': 'bg-blue-100 text-blue-800',
+        'Blocked': 'bg-red-100 text-red-800',
+        'Removed': 'bg-gray-100 text-gray-800',
+        'In Progress': 'bg-indigo-100 text-indigo-800',
+        'To Do': 'bg-blue-100 text-blue-800',
+        'Code Review': 'bg-teal-100 text-teal-800',
+        'Ready for Test': 'bg-orange-100 text-orange-800'
+    };
+
+    // Aplicar cor do status
+    const colorClass = statusColors[status] || 'bg-gray-100 text-gray-800';
+    statusElement.className = `inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${colorClass}`;
+    statusElement.textContent = status;
     
     // Processar e exibir a descrição
     const descriptionElement = document.getElementById('cardDescription');
