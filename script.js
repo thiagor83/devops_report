@@ -697,23 +697,33 @@ async function imprimirRelatorio() {
 
         currentY += 10;
 
-        // Resumo do Card
+        // Resumo do Card (subir mais)
+        currentY -= 25; // Aumentado de 10 para 25mm
+
+        // Box do Resumo
         pdf.setFillColor(249, 250, 251);
-        pdf.rect(margin, currentY, contentWidth, 50, 'F');
-        
+        pdf.rect(margin, currentY, contentWidth, 60, 'F'); // Aumentado altura de 50 para 60
+
+        // Título da seção
         pdf.setTextColor(75, 85, 99);
         pdf.setFont('helvetica', 'bold');
         pdf.setFontSize(12);
         pdf.text('Resumo do Card', margin + 5, currentY + 8);
-        
-        // Título do card
+
+        // Título do card (ajustado espaçamento)
         pdf.setFontSize(11);
         pdf.text('Título', margin + 5, currentY + 20);
         pdf.setFont('helvetica', 'normal');
+
+        // Quebrar texto do título em múltiplas linhas se necessário
         const title = pdf.splitTextToSize(document.getElementById('cardTitle').textContent, contentWidth - 15);
         pdf.text(title, margin + 5, currentY + 30);
 
-        currentY += 60;
+        // Ajustar posição Y após o resumo
+        currentY += 70; // Aumentado de 50 para 70
+
+        // Reduzir espaço antes da Análise de Tempo
+        currentY -= 30; // Aumentado de 20 para 30mm
 
         // Seção: Análise de Tempo
         if (currentY > pageHeight - 40) {
@@ -731,33 +741,32 @@ async function imprimirRelatorio() {
 
         currentY += 25;
 
-        // Gráficos lado a lado com 70% do tamanho
+        // Calcular dimensões mantendo a proporção original
+        const graphWidth = contentWidth * 0.95; // 95% da largura disponível
+
+        // Obter dimensões originais dos canvas
         const chartCanvas = document.getElementById('statusChart');
         const pieCanvas = document.getElementById('pieChart');
 
-        // Calcular dimensões mantendo a proporção original
-        const graphWidth = contentWidth * 0.95; // 95% da largura disponível
-        const originalChartRatio = chartCanvas.width / chartCanvas.height;
-        const originalPieRatio = pieCanvas.width / pieCanvas.height;
+        // Calcular proporções originais
+        const chartRatio = chartCanvas.height / chartCanvas.width;
+        const pieRatio = pieCanvas.height / pieCanvas.width;
 
-        // Calcular alturas mantendo as proporções originais
-        const chartHeight = graphWidth / originalChartRatio;
-        const pieHeight = graphWidth / originalPieRatio;
+        // Calcular alturas mantendo as proporções exatas
+        const chartHeight = graphWidth * chartRatio;
+        const pieHeight = graphWidth * pieRatio;
 
-        // Adicionar título dos gráficos
+        // Gráfico de barras
         pdf.setTextColor(75, 85, 99);
         pdf.setFontSize(12);
         pdf.setFont('helvetica', 'bold');
         pdf.text('Análise de Tempo em Status', margin, currentY);
         currentY += 8;
 
-        // Gráfico de barras
+        // Renderizar gráfico de barras com proporção original
         const chartImg = chartCanvas.toDataURL('image/png', 1.0);
         pdf.addImage(chartImg, 'PNG', margin, currentY, graphWidth, chartHeight);
-
-        // Iniciar nova página para o gráfico de pizza
-        pdf.addPage();
-        currentY = margin;
+        currentY += chartHeight + 15;
 
         // Título do gráfico de pizza
         pdf.setTextColor(75, 85, 99);
@@ -766,7 +775,7 @@ async function imprimirRelatorio() {
         pdf.text('Distribuição do Tempo (%)', margin, currentY);
         currentY += 8;
 
-        // Gráfico de pizza em nova página
+        // Renderizar gráfico de pizza com proporção original
         const pieImg = pieCanvas.toDataURL('image/png', 1.0);
         pdf.addImage(pieImg, 'PNG', margin, currentY, graphWidth, pieHeight);
         currentY += pieHeight + 15;
