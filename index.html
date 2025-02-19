@@ -49,24 +49,6 @@
 
                 <!-- Formulário -->
                 <div class="p-6 space-y-6">
-                    <!-- PAT Input com ícone e tooltip -->
-                    <div class="relative">
-                        <label for="pat" class="block text-sm font-medium text-gray-700 flex items-center">
-                            Personal Access Token (PAT)
-                            <i class="fas fa-info-circle ml-2 text-gray-400 hover:text-blue-500 cursor-pointer"
-                               title="Token de acesso pessoal do Azure DevOps"></i>
-                        </label>
-                        <div class="mt-1 relative rounded-md shadow-sm">
-                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                <i class="fas fa-key text-gray-400"></i>
-                            </div>
-                            <input type="password" 
-                                   id="pat" 
-                                   placeholder="Cole seu PAT aqui" 
-                                   class="pl-10 block w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500">
-                        </div>
-                    </div>
-
                     <!-- Filtros em Grid -->
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <!-- Código do Card -->
@@ -216,12 +198,6 @@
             const loadingText = document.getElementById('loadingText');
             const loadingProgress = document.getElementById('loadingProgress');
             const btnGerar = document.getElementById('btnGerar');
-            const pat = document.getElementById('pat').value;
-            
-            if (!pat) {
-                showToast('error', 'Token PAT é obrigatório', 'Por favor, insira um token válido para continuar.');
-                return;
-            }
 
             try {
                 loadingOverlay.classList.remove('hidden');
@@ -234,7 +210,6 @@
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        pat: pat,
                         cardId: document.getElementById('cardId').value,
                         dateRange: document.getElementById('dateRange').value
                     })
@@ -274,18 +249,12 @@
 
         async function analisarCard() {
             const cardId = document.getElementById('cardId').value;
-            const pat = document.getElementById('pat').value;
             const historySidebar = document.getElementById('historySidebar');
             const historyContent = document.getElementById('historyContent');
             const btnAnalisar = document.getElementById('btnAnalisar');
             
             if (!cardId) {
                 showToast('error', 'Código do card é obrigatório', 'Por favor, insira um código de card válido.');
-                return;
-            }
-            
-            if (!pat) {
-                showToast('error', 'Token PAT é obrigatório', 'Por favor, insira um token válido para continuar.');
                 return;
             }
 
@@ -303,7 +272,6 @@
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        pat: pat,
                         cardId: cardId
                     })
                 });

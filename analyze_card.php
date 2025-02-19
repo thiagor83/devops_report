@@ -6,10 +6,37 @@ header('Access-Control-Allow-Headers: Content-Type');
 
 require 'vendor/autoload.php';
 
-// Configurações do Azure DevOps
-define('API_VERSION', '7.1');
-define('ORGANIZATION', 'sua-organizacao'); // Edite aqui o nome da sua organização
-define('PROJECT', 'nome-projeto');     // Edite aqui o nome do seu projeto
+// Carrega as configurações
+$configFile = __DIR__ . '/config.php';
+
+if (!file_exists($configFile)) {
+    http_response_code(500);
+    echo json_encode([
+        'success' => false,
+        'error' => 'Arquivo de configuração não encontrado. Por favor, copie config.example.php para config.php e configure-o.'
+    ]);
+    exit;
+}
+
+$config = require $configFile;
+
+if (!isset($config['azure']) || 
+    !isset($config['azure']['api_version']) || 
+    !isset($config['azure']['organization']) || 
+    !isset($config['azure']['project']) || 
+    !isset($config['azure']['personal_access_token'])) {
+    http_response_code(500);
+    echo json_encode([
+        'success' => false,
+        'error' => 'Configuração incompleta. Verifique se todos os campos necessários estão preenchidos no config.php.'
+    ]);
+    exit;
+}
+
+// Define as constantes
+define('API_VERSION', $config['azure']['api_version']);
+define('ORGANIZATION', $config['azure']['organization']);
+define('PROJECT', $config['azure']['project']);
 
 function callDevOpsApi($url, $pat, $method = 'GET', $body = null) {
     $ch = curl_init();
@@ -51,23 +78,38 @@ try {
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $data = json_decode(file_get_contents('php://input'), true);
         
-        if (empty($data['pat'])) {
-            throw new Exception('Token PAT é obrigatório');
-        }
-        
         if (empty($data['cardId'])) {
             throw new Exception('ID do card é obrigatório');
         }
         
-        $pat = $data['pat'];
+        $pat = $config['azure']['personal_access_token'];
         $cardId = $data['cardId'];
         
         // URL base
         $baseUrl = "https://dev.azure.com/" . ORGANIZATION;
         
-        // Buscar detalhes do card
+        // Construir URL do card
         $itemUrl = "$baseUrl/" . rawurlencode(PROJECT) . "/_apis/wit/workitems/$cardId?api-version=" . API_VERSION;
-        $item = callDevOpsApi($itemUrl, $pat);
+        
+        // Debug info
+        if (isset($_GET['debug'])) {
+            echo json_encode([
+                'success' => false,
+                'debug' => [
+                    'url' => $itemUrl,
+                    'organization' => ORGANIZATION,
+                    'project' => PROJECT,
+                    'api_version' => API_VERSION
+                ]
+            ]);
+            exit;
+        }
+        
+        try {
+            $item = callDevOpsApi($itemUrl, $pat);
+        } catch (Exception $e) {
+            throw new Exception("Erro ao acessar o card: " . $e->getMessage() . "\nURL: $itemUrl");
+        }
         
         // Buscar histórico
         $historyUrl = "$baseUrl/" . rawurlencode(PROJECT) . "/_apis/wit/workitems/$cardId/updates?api-version=" . API_VERSION;

@@ -8,6 +8,7 @@ composer.lock
 .env
 .env.backup
 config.php
+!config.example.php
 
 # IDEs e editores
 .idea/
