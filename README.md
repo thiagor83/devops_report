@@ -1,4 +1,4 @@
-# 🚀 Sistema Analise e Extração relatórios para Projetos no AZURE DEVOPS
+# 🚀 Sistema Analise e Extração relatórios do AZURE DEVOPS
 
 ## 📝 Descrição
 Sistema de gerenciamento de tarefas desenvolvido em PHP, consumindo API do AZURE DEVOPS para extração de relatorios e analise de cards do projeto.
