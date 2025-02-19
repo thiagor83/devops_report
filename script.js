@@ -602,4 +602,265 @@ function renderizarGraficos(data) {
             }
         }
     });
+}
+
+// Função para imprimir relatório
+async function imprimirRelatorio() {
+    try {
+        toggleSpinner(true, 'Gerando PDF...');
+        
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF('p', 'mm', 'a4');
+        
+        // Configurações da página com margens menores
+        const pageWidth = pdf.internal.pageSize.getWidth();
+        const pageHeight = pdf.internal.pageSize.getHeight();
+        const margin = 10; // Reduzido de 15 para 10
+        const contentWidth = pageWidth - (2 * margin);
+        
+        let currentY = margin;
+
+        // Cabeçalho - Análise de Produtividade
+        pdf.setFillColor(37, 99, 235); // Azul do cabeçalho
+        pdf.rect(margin, currentY, contentWidth, 15, 'F');
+        
+        pdf.setTextColor(255, 255, 255);
+        pdf.setFont('helvetica', 'bold');
+        pdf.setFontSize(14);
+        pdf.text('Análise de Produtividade', margin + 8, currentY + 10);
+        
+        // Número do Card
+        const cardId = document.getElementById('cardId').value;
+        pdf.text(`Card #${cardId}`, margin + contentWidth - 30, currentY + 10);
+        
+        currentY += 25;
+
+        // Status Atual
+        const status = document.getElementById('cardStatus').textContent;
+        pdf.setTextColor(75, 85, 99);
+        pdf.setFontSize(12);
+        pdf.text('Status Atual', margin, currentY);
+        
+        // Box do status com cor de fundo
+        pdf.setFillColor(254, 226, 226); // Cor de fundo do status
+        pdf.roundedRect(margin + 60, currentY - 5, 40, 8, 1, 1, 'F');
+        pdf.setTextColor(220, 38, 38);
+        pdf.setFontSize(10);
+        pdf.text(status, margin + 62, currentY + 1);
+        
+        currentY += 15;
+
+        // Grid de informações em duas colunas
+        const leftColX = margin;
+        const rightColX = margin + (contentWidth / 2);
+        
+        // Coluna da esquerda
+        pdf.setTextColor(75, 85, 99);
+        pdf.setFontSize(11);
+        
+        const leftCol = [
+            { label: 'Data Criação:', value: document.getElementById('createdDate').textContent },
+            { label: 'Início Desenvolvimento:', value: document.getElementById('devStartDate').textContent },
+            { label: 'Conclusão:', value: document.getElementById('devEndDate').textContent }
+        ];
+
+        leftCol.forEach(item => {
+            pdf.setFont('helvetica', 'normal');
+            pdf.text(item.label, leftColX, currentY);
+            pdf.setFont('helvetica', 'bold');
+            pdf.text(item.value, leftColX + 45, currentY);
+            currentY += 10;
+        });
+
+        // Resetar Y para coluna da direita
+        currentY -= 30;
+
+        // Coluna da direita
+        const rightCol = [
+            { label: 'Tempo em Desenvolvimento:', value: document.getElementById('totalDevTime').textContent, color: '#2563eb' },
+            { label: 'Tempo em Teste:', value: document.getElementById('totalTestTime').textContent, color: '#059669' },
+            { label: 'Tempo até Aprovação:', value: document.getElementById('totalApprovalTime').textContent },
+            { label: 'Número de Reprovações:', value: document.getElementById('reprovedCount').textContent, color: '#dc2626' }
+        ];
+
+        rightCol.forEach(item => {
+            pdf.setFont('helvetica', 'normal');
+            pdf.setTextColor(75, 85, 99);
+            pdf.text(item.label, rightColX, currentY);
+            pdf.setFont('helvetica', 'bold');
+            if (item.color) {
+                pdf.setTextColor(item.color);
+            }
+            pdf.text(item.value, rightColX + 50, currentY);
+            currentY += 10;
+        });
+
+        currentY += 10;
+
+        // Resumo do Card
+        pdf.setFillColor(249, 250, 251);
+        pdf.rect(margin, currentY, contentWidth, 50, 'F');
+        
+        pdf.setTextColor(75, 85, 99);
+        pdf.setFont('helvetica', 'bold');
+        pdf.setFontSize(12);
+        pdf.text('Resumo do Card', margin + 5, currentY + 8);
+        
+        // Título do card
+        pdf.setFontSize(11);
+        pdf.text('Título', margin + 5, currentY + 20);
+        pdf.setFont('helvetica', 'normal');
+        const title = pdf.splitTextToSize(document.getElementById('cardTitle').textContent, contentWidth - 15);
+        pdf.text(title, margin + 5, currentY + 30);
+
+        currentY += 60;
+
+        // Seção: Análise de Tempo
+        if (currentY > pageHeight - 40) {
+            pdf.addPage();
+            currentY = margin;
+        }
+
+        pdf.setFillColor(37, 99, 235);
+        pdf.rect(margin, currentY, contentWidth, 15, 'F');
+
+        pdf.setTextColor(255, 255, 255);
+        pdf.setFont('helvetica', 'bold');
+        pdf.setFontSize(14);
+        pdf.text('Análise de Tempo', margin + 8, currentY + 10);
+
+        currentY += 25;
+
+        // Gráficos lado a lado com 70% do tamanho
+        const chartCanvas = document.getElementById('statusChart');
+        const pieCanvas = document.getElementById('pieChart');
+
+        // Calcular dimensões mantendo a proporção original
+        const graphWidth = contentWidth * 0.95; // 95% da largura disponível
+        const originalChartRatio = chartCanvas.width / chartCanvas.height;
+        const originalPieRatio = pieCanvas.width / pieCanvas.height;
+
+        // Calcular alturas mantendo as proporções originais
+        const chartHeight = graphWidth / originalChartRatio;
+        const pieHeight = graphWidth / originalPieRatio;
+
+        // Adicionar título dos gráficos
+        pdf.setTextColor(75, 85, 99);
+        pdf.setFontSize(12);
+        pdf.setFont('helvetica', 'bold');
+        pdf.text('Análise de Tempo em Status', margin, currentY);
+        currentY += 8;
+
+        // Gráfico de barras
+        const chartImg = chartCanvas.toDataURL('image/png', 1.0);
+        pdf.addImage(chartImg, 'PNG', margin, currentY, graphWidth, chartHeight);
+
+        // Iniciar nova página para o gráfico de pizza
+        pdf.addPage();
+        currentY = margin;
+
+        // Título do gráfico de pizza
+        pdf.setTextColor(75, 85, 99);
+        pdf.setFontSize(12);
+        pdf.setFont('helvetica', 'bold');
+        pdf.text('Distribuição do Tempo (%)', margin, currentY);
+        currentY += 8;
+
+        // Gráfico de pizza em nova página
+        const pieImg = pieCanvas.toDataURL('image/png', 1.0);
+        pdf.addImage(pieImg, 'PNG', margin, currentY, graphWidth, pieHeight);
+        currentY += pieHeight + 15;
+
+        // Verificar se há espaço suficiente para o histórico
+        if (currentY + 100 > pageHeight - margin) {
+            pdf.addPage();
+            currentY = margin;
+        }
+
+        // Cabeçalho do histórico
+        pdf.setFillColor(37, 99, 235);
+        pdf.rect(margin, currentY, contentWidth, 15, 'F');
+        pdf.setTextColor(255, 255, 255);
+        pdf.setFont('helvetica', 'bold');
+        pdf.setFontSize(14);
+        pdf.text('Histórico de Alterações', margin + 8, currentY + 10);
+        currentY += 25;
+
+        // Tabela de histórico
+        const history = Array.from(document.getElementById('historyContent').children[0].children);
+        
+        // Cabeçalho da tabela
+        pdf.setFillColor(243, 244, 246);
+        pdf.rect(margin, currentY - 5, contentWidth, 10, 'F');
+        
+        pdf.setTextColor(75, 85, 99);
+        pdf.setFontSize(10);
+        
+        const colWidths = {
+            data: 35,
+            autor: 45,
+            deStatus: 50,
+            paraStatus: 50
+        };
+        
+        pdf.setFont('helvetica', 'bold');
+        pdf.text('Data', margin + 2, currentY);
+        pdf.text('Responsável', margin + colWidths.data + 2, currentY);
+        pdf.text('De', margin + colWidths.data + colWidths.autor + 2, currentY);
+        pdf.text('Para', margin + colWidths.data + colWidths.autor + colWidths.deStatus + 2, currentY);
+        
+        currentY += 10;
+
+        // Dados do histórico
+        history.forEach((item, index) => {
+            if (currentY > pageHeight - 20) {
+                pdf.addPage();
+                currentY = margin;
+                
+                // Repetir cabeçalho da tabela na nova página
+                pdf.setFillColor(243, 244, 246);
+                pdf.rect(margin, currentY - 5, contentWidth, 10, 'F');
+                pdf.setFont('helvetica', 'bold');
+                pdf.text('Data', margin + 2, currentY);
+                pdf.text('Responsável', margin + colWidths.data + 2, currentY);
+                pdf.text('De', margin + colWidths.data + colWidths.autor + 2, currentY);
+                pdf.text('Para', margin + colWidths.data + colWidths.autor + colWidths.deStatus + 2, currentY);
+                currentY += 10;
+            }
+
+            // Alternar cores das linhas
+            if (index % 2 === 0) {
+                pdf.setFillColor(249, 250, 251);
+                pdf.rect(margin, currentY - 5, contentWidth, 8, 'F');
+            }
+
+            const date = item.querySelector('.text-gray-500').textContent;
+            const author = item.querySelector('.text-gray-700').textContent;
+            const oldState = item.querySelector('.text-red-500').textContent;
+            const newState = item.querySelector('.text-green-500').textContent;
+
+            pdf.setFont('helvetica', 'normal');
+            pdf.setTextColor(75, 85, 99);
+            pdf.text(date, margin + 2, currentY);
+            pdf.text(author, margin + colWidths.data + 2, currentY);
+            
+            pdf.setTextColor(220, 38, 38); // Vermelho para status anterior
+            pdf.text(oldState, margin + colWidths.data + colWidths.autor + 2, currentY);
+            
+            pdf.setTextColor(34, 197, 94); // Verde para novo status
+            pdf.text(newState, margin + colWidths.data + colWidths.autor + colWidths.deStatus + 2, currentY);
+
+            currentY += 8;
+        });
+
+        // Salvar PDF
+        const fileName = `relatorio_card_${cardId}_${new Date().toISOString().split('T')[0]}.pdf`;
+        pdf.save(fileName);
+
+    } catch (error) {
+        console.error('Erro ao gerar PDF:', error);
+        showToast('error', 'Erro ao gerar PDF', 'Tente novamente.');
+    } finally {
+        toggleSpinner(false);
+    }
 } 
