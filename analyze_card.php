@@ -217,15 +217,63 @@ try {
                     ];
                 }, $durations)
             ];
+
+            // Dentro do try, após obter $item e antes de renderizar o histórico
+            $productivityAnalysis = [
+                'created_date' => date('d/m/Y H:i', strtotime($item['fields']['System.CreatedDate'])),
+                'dev_start' => null,
+                'dev_end' => null,
+                'total_dev_time' => 0,
+                'total_test_time' => 0,
+                'total_approval_time' => 'Ainda não Aprovado',
+                'is_approved' => false
+            ];
+
+            // Processar histórico para análise de produtividade
+            if (isset($historyResult['value'])) {
+                foreach ($updates as $update) {
+                    if (isset($update['fields']['System.State'])) {
+                        $date = strtotime($update['fields']['System.ChangedDate']['newValue'] ?? $update['revisedDate']);
+                        $newState = $update['fields']['System.State']['newValue'];
+                        
+                        // Detectar início do desenvolvimento
+                        if ($newState === 'Em desenvolvimento' && !$productivityAnalysis['dev_start']) {
+                            $productivityAnalysis['dev_start'] = date('d/m/Y H:i', $date);
+                        }
+                        
+                        // Detectar conclusão do desenvolvimento
+                        if ($newState === 'Liberado para Teste TI' && !$productivityAnalysis['dev_end']) {
+                            $productivityAnalysis['dev_end'] = date('d/m/Y H:i', $date);
+                        }
+
+                        // Detectar aprovação
+                        if ($newState === 'Aprovado (Teste)') {
+                            $productivityAnalysis['is_approved'] = true;
+                            $productivityAnalysis['total_approval_time'] = round(($date - strtotime($item['fields']['System.CreatedDate'])) / 3600, 2);
+                        }
+                    }
+                }
+            }
+
+            // Calcular tempos totais a partir das durações
+            foreach ($statusDurations as $status => $hours) {
+                if ($status === 'Em desenvolvimento') {
+                    $productivityAnalysis['total_dev_time'] = round($hours, 2);
+                } elseif (in_array($status, ['Liberado para Teste TI', 'Liberado para Teste Usuário'])) {
+                    $productivityAnalysis['total_test_time'] += round($hours, 2);
+                }
+            }
+
+            // Incluir a análise de produtividade na resposta
+            echo json_encode([
+                'success' => true,
+                'history' => $history,
+                'durations' => $durations,
+                'title' => $item['fields']['System.Title'] ?? 'Card não encontrado',
+                'productivity' => $productivityAnalysis,
+                'debug' => $debug
+            ]);
         }
-        
-        echo json_encode([
-            'success' => true,
-            'history' => $history,
-            'durations' => $durations,
-            'title' => $item['fields']['System.Title'] ?? 'Card não encontrado',
-            'debug' => $debug // Incluir informações de debug na resposta
-        ]);
     } else {
         throw new Exception('Método HTTP não suportado. Use POST.');
     }
