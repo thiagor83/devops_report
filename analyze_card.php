@@ -8,8 +8,8 @@ require 'vendor/autoload.php';
 
 // Configurações do Azure DevOps
 define('API_VERSION', '7.1');
-define('ORGANIZATION', 'clinicadoleite'); // Edite aqui o nome da sua organização
-define('PROJECT', 'Legado e ETL BI');     // Edite aqui o nome do seu projeto
+define('ORGANIZATION', 'sua-organizacao'); // Edite aqui o nome da sua organização
+define('PROJECT', 'nome-projeto');     // Edite aqui o nome do seu projeto
 
 function callDevOpsApi($url, $pat, $method = 'GET', $body = null) {
     $ch = curl_init();

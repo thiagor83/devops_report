@@ -30,6 +30,9 @@ cd devops_report
 # Instale as dependências
 composer install
 
+# Configure o arquivo de configuração
+No arquivo analyze_card.php, configure as informações da sua organização e projeto do Azure DevOps.
+
 ## 📋 Pré-requisitos
 - PHP 7.4 ou superior
 - Composer
