@@ -6,7 +6,8 @@
         "php": ">=7.4",
         "nesbot/carbon": "^2.71",
         "symfony/console": "^5.4",
-        "guzzlehttp/guzzle": "^7.8"
+        "guzzlehttp/guzzle": "^7.8",
+        "phpoffice/phpspreadsheet": "^1.29"
     },
     "autoload": {
         "psr-4": {

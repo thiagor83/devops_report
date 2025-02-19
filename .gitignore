@@ -45,4 +45,7 @@ desktop.ini
 # Outros
 *.bak
 *.old
-*.backup 
+*.backup
+
+# Ignorar arquivos de relatório gerados
+reports/*.xlsx 

@@ -1,3 +1,6 @@
+// Adicionar no início do arquivo, junto com as outras variáveis globais
+let fp = null; // Instância global do Flatpickr
+
 // Inicializar o seletor de data
 document.addEventListener('DOMContentLoaded', function() {
     const cardInput = document.getElementById('cardId');
@@ -5,8 +8,16 @@ document.addEventListener('DOMContentLoaded', function() {
     const btnAnalisar = document.getElementById('btnAnalisar');
     const btnGerar = document.getElementById('btnGerar');
 
+    // Função para limpar o campo de código
+    function limparCampoCodigo() {
+        cardInput.value = '';
+        cardInput.disabled = false;
+        btnAnalisar.disabled = true;
+        dateInput.disabled = false;
+    }
+
     // Configuração do Flatpickr
-    const fp = flatpickr("#dateRange", {
+    fp = flatpickr("#dateRange", {
         mode: "range",
         dateFormat: "d/m/Y",
         locale: "pt",
@@ -16,27 +27,48 @@ document.addEventListener('DOMContentLoaded', function() {
         time_24hr: true,
         enableTime: false,
         defaultHour: 0,
-        onChange: function(selectedDates) {
-            const hasDateSelected = selectedDates.length > 0;
-            
-            // Desabilita input do card quando período está preenchido
-            cardInput.disabled = hasDateSelected;
-            if (hasDateSelected) {
-                cardInput.value = '';
-                btnAnalisar.disabled = true;
-            }
-            
-            // Habilita/desabilita botão gerar baseado no período
+        onOpen: function() {
+            limparCampoCodigo();
+        },
+        onChange: function(selectedDates, dateStr) {
+            const hasDateSelected = selectedDates.length === 2; // Modificado para verificar duas datas
             btnGerar.disabled = !hasDateSelected;
+            
+            if (hasDateSelected) {
+                cardInput.disabled = true;
+            }
         },
         onClose: function(selectedDates) {
-            // Verifica se realmente há datas selecionadas
-            const hasDateSelected = selectedDates.length > 0;
+            const hasDateSelected = selectedDates.length === 2;
             cardInput.disabled = hasDateSelected;
             if (!hasDateSelected) {
                 cardInput.disabled = false;
                 btnGerar.disabled = true;
             }
+        },
+        // Formatação personalizada para garantir o formato correto
+        formatDate: function(date, format) {
+            // Formatar como dd/mm/yyyy
+            const day = date.getDate().toString().padStart(2, '0');
+            const month = (date.getMonth() + 1).toString().padStart(2, '0');
+            const year = date.getFullYear();
+            return `${day}/${month}/${year}`;
+        }
+    });
+
+    // Adicionar evento de clique no container do dateInput
+    dateInput.parentElement.addEventListener('click', function() {
+        if (cardInput.value) {
+            limparCampoCodigo();
+        }
+    });
+
+    // Event Listener para quando o campo código recebe foco
+    cardInput.addEventListener('focus', function() {
+        if (dateInput.value) {
+            fp.clear();
+            dateInput.disabled = false;
+            btnGerar.disabled = true;
         }
     });
 
@@ -44,13 +76,7 @@ document.addEventListener('DOMContentLoaded', function() {
     cardInput.addEventListener('input', function(e) {
         const hasCardValue = !!this.value;
         btnAnalisar.disabled = !hasCardValue;
-        
-        // Desabilita input de período quando card está preenchido
         dateInput.disabled = hasCardValue;
-        if (hasCardValue) {
-            fp.clear();
-            btnGerar.disabled = true;
-        }
     });
 
     // Event Listener para tecla Enter no input do card
@@ -74,11 +100,81 @@ document.addEventListener('DOMContentLoaded', function() {
     dateInput.disabled = false;
     btnAnalisar.disabled = true;
     btnGerar.disabled = true;
+
+    // Inicializar modo padrão
+    alternarModo('card');
 });
 
 // Variáveis globais para os gráficos
 let statusChart = null;
 let pieChart = null;
+
+// Adicionar no início do arquivo, após as variáveis globais
+let modoAtual = 'card'; // 'card' ou 'relatorio'
+
+// Função para alternar entre os modos
+function alternarModo(modo) {
+    modoAtual = modo;
+    const btnModoCard = document.getElementById('btnModoCard');
+    const btnModoRelatorio = document.getElementById('btnModoRelatorio');
+    const formCard = document.getElementById('formCard');
+    const formRelatorio = document.getElementById('formRelatorio');
+    const cardInput = document.getElementById('cardId');
+    const dateInput = document.getElementById('dateRange');
+
+    // Atualizar estilo dos botões
+    if (modo === 'card') {
+        btnModoCard.classList.add('bg-blue-600', 'text-white');
+        btnModoCard.classList.remove('bg-gray-200', 'text-gray-700');
+        btnModoRelatorio.classList.add('bg-gray-200', 'text-gray-700');
+        btnModoRelatorio.classList.remove('bg-blue-600', 'text-white');
+        
+        // Mostrar/esconder formulários
+        formCard.classList.remove('hidden');
+        formRelatorio.classList.add('hidden');
+        
+        // Configurar campos para modo card
+        cardInput.disabled = false;
+        dateInput.disabled = true;
+        dateInput.value = '';
+        fp.clear();
+    } else {
+        btnModoRelatorio.classList.add('bg-blue-600', 'text-white');
+        btnModoRelatorio.classList.remove('bg-gray-200', 'text-gray-700');
+        btnModoCard.classList.add('bg-gray-200', 'text-gray-700');
+        btnModoCard.classList.remove('bg-blue-600', 'text-white');
+        
+        // Mostrar/esconder formulários
+        formRelatorio.classList.remove('hidden');
+        formCard.classList.add('hidden');
+        
+        // Configurar campos para modo relatório
+        cardInput.value = '';
+        cardInput.disabled = true;
+        dateInput.disabled = false;
+        fp.clear(); // Limpar seleção de data anterior
+    }
+
+    // Esconder resultados anteriores
+    document.getElementById('productivityAnalysis')?.classList.add('hidden');
+    document.getElementById('chartContainer')?.classList.add('hidden');
+    document.getElementById('historySidebar')?.classList.add('hidden');
+}
+
+// Função para mostrar/esconder spinner
+function toggleSpinner(show, message = 'Processando...', progress = '') {
+    const spinner = document.getElementById('loadingSpinner');
+    const loadingText = document.getElementById('loadingText');
+    const loadingProgress = document.getElementById('loadingProgress');
+    
+    if (show) {
+        loadingText.textContent = message;
+        loadingProgress.textContent = progress;
+        spinner.classList.remove('hidden');
+    } else {
+        spinner.classList.add('hidden');
+    }
+}
 
 // Função para mostrar notificações toast
 function showToast(type, message, detail = '') {
@@ -106,15 +202,32 @@ function showToast(type, message, detail = '') {
 
 // Função para gerar relatório
 async function gerarRelatorio() {
-    const loadingOverlay = document.getElementById('loadingOverlay');
-    const loadingText = document.getElementById('loadingText');
-    const loadingProgress = document.getElementById('loadingProgress');
     const btnGerar = document.getElementById('btnGerar');
+    
+    // Verificar se o Flatpickr está inicializado
+    if (!fp) {
+        showToast('error', 'Erro interno', 'Erro ao inicializar o seletor de data.');
+        return;
+    }
+    
+    // Obter as datas selecionadas
+    const selectedDates = fp.selectedDates;
+    if (selectedDates.length !== 2) {
+        showToast('error', 'Período inválido', 'Selecione uma data inicial e final.');
+        return;
+    }
 
     try {
-        loadingOverlay.classList.remove('hidden');
+        toggleSpinner(true, 'Iniciando geração do relatório...');
         btnGerar.disabled = true;
-        loadingText.textContent = 'Iniciando geração do relatório...';
+
+        // Formatar as datas no formato esperado pelo backend
+        const dateRange = selectedDates.map(date => {
+            const day = date.getDate().toString().padStart(2, '0');
+            const month = (date.getMonth() + 1).toString().padStart(2, '0');
+            const year = date.getFullYear();
+            return `${day}/${month}/${year}`;
+        }).join(' to ');
 
         const response = await fetch('report.php', {
             method: 'POST',
@@ -122,30 +235,39 @@ async function gerarRelatorio() {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                cardId: document.getElementById('cardId').value,
-                dateRange: document.getElementById('dateRange').value
+                dateRange: dateRange
             })
         });
 
         const data = await response.json();
         
         if (!data.success) {
-            throw new Error(data.error);
+            throw new Error(data.error || 'Erro ao gerar relatório');
         }
 
         if (data.totalItems && data.processedItems) {
             const progress = Math.round((data.processedItems / data.totalItems) * 100);
-            loadingProgress.textContent = `Processado ${progress}% (${data.processedItems}/${data.totalItems})`;
+            toggleSpinner(true, 'Gerando relatório...', `Processado ${progress}% (${data.processedItems}/${data.totalItems})`);
         }
 
         showToast('success', 'Relatório gerado com sucesso!', 'Iniciando download...');
-        window.location.href = data.filename;
+        
+        // Iniciar download do arquivo
+        if (data.fileUrl) {
+            const downloadUrl = window.location.href.replace(/\/[^\/]*$/, '/') + data.fileUrl;
+            const link = document.createElement('a');
+            link.href = downloadUrl;
+            link.download = data.fileUrl.split('/').pop();
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
 
     } catch (error) {
         showToast('error', 'Erro ao gerar relatório', error.message);
         console.error('Detalhes do erro:', error);
     } finally {
-        loadingOverlay.classList.add('hidden');
+        toggleSpinner(false);
         btnGerar.disabled = false;
     }
 }
@@ -163,6 +285,7 @@ async function analisarCard() {
     }
 
     try {
+        toggleSpinner(true, 'Analisando card...');
         btnAnalisar.disabled = true;
         historyContent.innerHTML = '<div class="flex justify-center"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div></div>';
         historySidebar.classList.remove('hidden');
@@ -196,6 +319,7 @@ async function analisarCard() {
         historySidebar.classList.add('hidden');
         chartContainer.classList.add('hidden');
     } finally {
+        toggleSpinner(false);
         btnAnalisar.disabled = false;
     }
 }
