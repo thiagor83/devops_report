@@ -226,31 +226,46 @@ try {
                 'total_dev_time' => 0,
                 'total_test_time' => 0,
                 'total_approval_time' => 'Ainda não Aprovado',
-                'is_approved' => false
+                'is_approved' => false,
+                'current_status' => $item['fields']['System.State']['newValue'] ?? 'New', // Status atual
+                'reproved_count' => 0 // Contador de reprovações
             ];
 
             // Processar histórico para análise de produtividade
             if (isset($historyResult['value'])) {
+                $lastTestStatus = null; // Para rastrear o último status de teste
+                
                 foreach ($updates as $update) {
                     if (isset($update['fields']['System.State'])) {
                         $date = strtotime($update['fields']['System.ChangedDate']['newValue'] ?? $update['revisedDate']);
                         $newState = $update['fields']['System.State']['newValue'];
+                        $oldState = $update['fields']['System.State']['oldValue'] ?? null;
                         
                         // Detectar início do desenvolvimento
                         if ($newState === 'Em desenvolvimento' && !$productivityAnalysis['dev_start']) {
                             $productivityAnalysis['dev_start'] = date('d/m/Y H:i', $date);
                         }
                         
-                        // Detectar conclusão do desenvolvimento
-                        if ($newState === 'Liberado para Teste TI' && !$productivityAnalysis['dev_end']) {
+                        // Detectar conclusão do desenvolvimento (apenas se aprovado ou Done)
+                        if (($newState === 'Aprovado (Teste)' || $newState === 'Done') && !$productivityAnalysis['dev_end']) {
                             $productivityAnalysis['dev_end'] = date('d/m/Y H:i', $date);
                         }
 
-                        // Detectar aprovação (agora inclui Done)
+                        // Detectar reprovações
+                        if ($newState === 'Em desenvolvimento' && 
+                            $oldState && 
+                            (strpos($oldState, 'Teste') !== false || $oldState === 'Code Review')) {
+                            $productivityAnalysis['reproved_count']++;
+                        }
+
+                        // Detectar aprovação
                         if ($newState === 'Aprovado (Teste)' || $newState === 'Done') {
                             $productivityAnalysis['is_approved'] = true;
                             $productivityAnalysis['total_approval_time'] = round(($date - strtotime($item['fields']['System.CreatedDate'])) / 3600, 2);
                         }
+                        
+                        // Atualizar status atual
+                        $productivityAnalysis['current_status'] = $newState;
                     }
                 }
             }

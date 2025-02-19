@@ -1,7 +1,12 @@
 // Inicializar o seletor de data
 document.addEventListener('DOMContentLoaded', function() {
+    const cardInput = document.getElementById('cardId');
+    const dateInput = document.getElementById('dateRange');
+    const btnAnalisar = document.getElementById('btnAnalisar');
+    const btnGerar = document.getElementById('btnGerar');
+
     // Configuração do Flatpickr
-    flatpickr("#dateRange", {
+    const fp = flatpickr("#dateRange", {
         mode: "range",
         dateFormat: "d/m/Y",
         locale: "pt",
@@ -10,14 +15,65 @@ document.addEventListener('DOMContentLoaded', function() {
         allowInput: true,
         time_24hr: true,
         enableTime: false,
-        defaultHour: 0
+        defaultHour: 0,
+        onChange: function(selectedDates) {
+            const hasDateSelected = selectedDates.length > 0;
+            
+            // Desabilita input do card quando período está preenchido
+            cardInput.disabled = hasDateSelected;
+            if (hasDateSelected) {
+                cardInput.value = '';
+                btnAnalisar.disabled = true;
+            }
+            
+            // Habilita/desabilita botão gerar baseado no período
+            btnGerar.disabled = !hasDateSelected;
+        },
+        onClose: function(selectedDates) {
+            // Verifica se realmente há datas selecionadas
+            const hasDateSelected = selectedDates.length > 0;
+            cardInput.disabled = hasDateSelected;
+            if (!hasDateSelected) {
+                cardInput.disabled = false;
+                btnGerar.disabled = true;
+            }
+        }
     });
 
     // Event Listener para o input do card
-    document.getElementById('cardId').addEventListener('input', function(e) {
-        const btnAnalisar = document.getElementById('btnAnalisar');
-        btnAnalisar.disabled = !this.value;
+    cardInput.addEventListener('input', function(e) {
+        const hasCardValue = !!this.value;
+        btnAnalisar.disabled = !hasCardValue;
+        
+        // Desabilita input de período quando card está preenchido
+        dateInput.disabled = hasCardValue;
+        if (hasCardValue) {
+            fp.clear();
+            btnGerar.disabled = true;
+        }
     });
+
+    // Event Listener para tecla Enter no input do card
+    cardInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter' && this.value) {
+            e.preventDefault();
+            analisarCard();
+        }
+    });
+
+    // Event Listener para tecla Enter no input de período
+    dateInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter' && dateInput.value) {
+            e.preventDefault();
+            gerarRelatorio();
+        }
+    });
+
+    // Inicialização dos estados
+    cardInput.disabled = false;
+    dateInput.disabled = false;
+    btnAnalisar.disabled = true;
+    btnGerar.disabled = true;
 });
 
 // Variáveis globais para os gráficos
@@ -144,6 +200,24 @@ async function analisarCard() {
     }
 }
 
+// Função para formatar tempo em dias, horas e minutos
+function formatarTempo(horas) {
+    const dias = Math.floor(horas / 24);
+    const horasRestantes = Math.floor(horas % 24);
+    const minutos = Math.round((horas - Math.floor(horas)) * 60);
+    
+    let tempoFormatado = '';
+    if (dias > 0) {
+        tempoFormatado = `${dias}d ${horasRestantes}h ${minutos}m`;
+    } else if (horasRestantes > 0) {
+        tempoFormatado = `${horasRestantes}h ${minutos}m`;
+    } else {
+        tempoFormatado = `${minutos}m`;
+    }
+    
+    return tempoFormatado;
+}
+
 // Função para atualizar a análise de produção
 function atualizarAnaliseProducao(data) {
     const productivitySection = document.getElementById('productivityAnalysis');
@@ -151,29 +225,30 @@ function atualizarAnaliseProducao(data) {
     
     document.getElementById('createdDate').textContent = data.productivity.created_date;
     document.getElementById('devStartDate').textContent = data.productivity.dev_start || 'N/A';
-    document.getElementById('devEndDate').textContent = data.productivity.dev_end || 'N/A';
-    document.getElementById('totalDevTime').textContent = `${data.productivity.total_dev_time} horas`;
-    document.getElementById('totalTestTime').textContent = `${data.productivity.total_test_time} horas`;
-    document.getElementById('totalApprovalTime').textContent = typeof data.productivity.total_approval_time === 'number' 
-        ? `${data.productivity.total_approval_time} horas`
-        : data.productivity.total_approval_time;
+    
+    // Atualizar data de conclusão
+    const devEndDate = document.getElementById('devEndDate');
+    if (data.productivity.is_approved) {
+        devEndDate.textContent = data.productivity.dev_end || 'N/A';
+    } else {
+        devEndDate.textContent = 'Em Andamento';
+        devEndDate.classList.add('text-yellow-600');
+    }
 
-    // Atualizar tempo de aprovação com formatação melhorada
+    // Exibir contagem de reprovações
+    document.getElementById('reprovedCount').textContent = 
+        data.productivity.reproved_count > 0 
+            ? `${data.productivity.reproved_count} ${data.productivity.reproved_count === 1 ? 'vez' : 'vezes'}`
+            : 'Nenhuma';
+
+    // Formatar tempos em desenvolvimento e teste
+    document.getElementById('totalDevTime').textContent = formatarTempo(data.productivity.total_dev_time);
+    document.getElementById('totalTestTime').textContent = formatarTempo(data.productivity.total_test_time);
+
+    // Atualizar tempo de aprovação
     const approvalTimeElement = document.getElementById('totalApprovalTime');
     if (data.productivity.is_approved) {
-        const hours = data.productivity.total_approval_time;
-        const days = Math.floor(hours / 24);
-        const remainingHours = Math.floor(hours % 24);
-        const minutes = Math.round((hours - Math.floor(hours)) * 60);
-        
-        let formattedTime = '';
-        if (days > 0) {
-            formattedTime = `${days}d ${remainingHours}h ${minutes}m`;
-        } else {
-            formattedTime = `${remainingHours}h ${minutes}m`;
-        }
-        
-        approvalTimeElement.textContent = formattedTime;
+        approvalTimeElement.textContent = formatarTempo(data.productivity.total_approval_time);
         approvalTimeElement.classList.remove('text-yellow-600');
         approvalTimeElement.classList.add('text-purple-600');
     } else {
