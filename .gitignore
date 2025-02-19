@@ -1,0 +1,47 @@
+# PHP
+/vendor/
+composer.phar
+composer.lock
+.phpunit.result.cache
+
+# Arquivos de ambiente e configuração
+.env
+.env.backup
+config.php
+
+# IDEs e editores
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+*.swp
+*.swo
+
+# Sistema operacional
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Arquivos temporários
+*.log
+*.cache
+*.tmp
+*.temp
+
+# Arquivos de saída e relatórios
+/exports/
+*.xlsx
+*.xls
+*.csv
+*.pdf
+
+# Dependências e builds
+/node_modules/
+/public/hot
+/public/storage
+/storage/*.key
+
+# Outros
+*.bak
+*.old
+*.backup 
