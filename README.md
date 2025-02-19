@@ -48,6 +48,6 @@ No arquivo analyze_card.php, configure as informações da sua organização e p
 Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para mais detalhes.
 
 ## 👨‍💻 Autor
-- Email: seu.email@exemplo.com
+- Email: thiagor83@me.com
 - LinkedIn: [Thiago Ferraz](https://www.linkedin.com/in/thiago-ferraz/)
 - GitHub: [@thiagor83](https://github.com/thiagor83)
