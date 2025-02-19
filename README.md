@@ -1,12 +1,9 @@
-# 🚀 Sistema de Gerenciamento de Tarefas
+# 🚀 Sistema Analise e Extração relatórios para Projetos no AZURE DEVOPS
 
 ## 📝 Descrição
-Sistema de gerenciamento de tarefas desenvolvido em PHP com Laravel, permitindo o controle e organização de atividades de forma eficiente e intuitiva.
+Sistema de gerenciamento de tarefas desenvolvido em PHP, consumindo API do AZURE DEVOPS para extração de relatorios e analise de cards do projeto.
 
 ## 🎯 Funcionalidades Principais
-- ✨ Cadastro e gerenciamento de tarefas
-- 👥 Sistema de usuários com autenticação
-- 📱 Interface responsiva e amigável
 - 🔍 Busca e filtros de tarefas
 - 📊 Dashboard com visão geral das atividades
 
