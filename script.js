@@ -449,6 +449,31 @@ function atualizarAnaliseProducao(data) {
     } else {
         descriptionElement.innerHTML = '<em class="text-gray-400">Sem descrição disponível</em>';
     }
+
+    // Atualizar Expected Finish
+    const expectedFinishDate = document.getElementById('expectedFinishDate');
+    const expectedFinishTime = document.getElementById('expectedFinishTime');
+    
+    if (data.fields && data.fields['Expected Finish']) {
+        const expectedFinish = new Date(data.fields['Expected Finish']);
+        expectedFinishDate.textContent = expectedFinish.toLocaleDateString('pt-BR');
+        expectedFinishTime.textContent = expectedFinish.toLocaleTimeString('pt-BR', {
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    } else {
+        expectedFinishDate.textContent = 'Não definido';
+        expectedFinishTime.textContent = '';
+    }
+
+    // Atualizar Horas Estimadas
+    const estimatedHours = document.getElementById('estimatedHours');
+    if (data.fields && data.fields['Effort'] !== null) {
+        const effort = data.fields['Effort'];
+        estimatedHours.textContent = `${effort}h`;
+    } else {
+        estimatedHours.textContent = 'Não definido';
+    }
 }
 
 // Função para renderizar histórico
@@ -650,59 +675,104 @@ async function imprimirRelatorio() {
         
         currentY += 15;
 
-        // Grid de informações em duas colunas
+        // Ajustar as constantes de posicionamento
         const leftColX = margin;
-        const rightColX = margin + (contentWidth / 2);
-        
-        // Coluna da esquerda
-        pdf.setTextColor(75, 85, 99);
-        pdf.setFontSize(11);
-        
+        const rightColX = margin + (contentWidth / 2) + 5; // Reduzido de 10 para 5
+
+        // Ajustar larguras e posições dos valores
+        const labelWidth = 50; // Aumentado para acomodar labels maiores
+        const valueX = leftColX + labelWidth + 2;
+        const rightLabelWidth = 60; // Aumentado para acomodar labels maiores
+        const rightValueX = rightColX + rightLabelWidth + 2;
+
         const leftCol = [
             { label: 'Data Criação:', value: document.getElementById('createdDate').textContent },
             { label: 'Início Desenvolvimento:', value: document.getElementById('devStartDate').textContent },
-            { label: 'Conclusão:', value: document.getElementById('devEndDate').textContent }
+            { label: 'Conclusão:', value: document.getElementById('devEndDate').textContent },
+            { 
+                label: 'Previsão Entrega:', 
+                value: `${document.getElementById('expectedFinishDate').textContent} ${document.getElementById('expectedFinishTime').textContent}`.trim(),
+                color: '#7C3AED'
+            },
+            { 
+                label: 'Horas Estimadas:', 
+                value: document.getElementById('estimatedHours').textContent,
+                color: '#4F46E5'
+            }
         ];
 
         leftCol.forEach(item => {
+            // Garantir que textos longos não sejam cortados
+            const label = pdf.splitTextToSize(item.label, labelWidth);
+            const value = pdf.splitTextToSize(item.value || '', (contentWidth / 2) - labelWidth - 10);
+
             pdf.setFont('helvetica', 'normal');
-            pdf.text(item.label, leftColX, currentY);
+            pdf.setTextColor(75, 85, 99);
+            pdf.text(label, leftColX, currentY);
+            
             pdf.setFont('helvetica', 'bold');
-            pdf.text(item.value, leftColX + 45, currentY);
+            if (item.color) {
+                pdf.setTextColor(item.color);
+            } else {
+                pdf.setTextColor(75, 85, 99);
+            }
+            pdf.text(value, valueX, currentY);
+            
             currentY += 10;
         });
 
         // Resetar Y para coluna da direita
-        currentY -= 30;
+        currentY -= 50;
 
-        // Coluna da direita
+        // Para a coluna da direita
         const rightCol = [
-            { label: 'Tempo em Desenvolvimento:', value: document.getElementById('totalDevTime').textContent, color: '#2563eb' },
-            { label: 'Tempo em Teste:', value: document.getElementById('totalTestTime').textContent, color: '#059669' },
-            { label: 'Tempo até Aprovação:', value: document.getElementById('totalApprovalTime').textContent },
-            { label: 'Número de Reprovações:', value: document.getElementById('reprovedCount').textContent, color: '#dc2626' }
+            { 
+                label: 'Tempo em Desenvolvimento:', 
+                value: document.getElementById('totalDevTime').textContent, 
+                color: '#2563eb' 
+            },
+            { 
+                label: 'Tempo em Teste:', 
+                value: document.getElementById('totalTestTime').textContent, 
+                color: '#059669' 
+            },
+            { 
+                label: 'Tempo até Aprovação:', 
+                value: document.getElementById('totalApprovalTime').textContent,
+                color: '#6B7280' // cinza para campos neutros
+            },
+            { 
+                label: 'Número de Reprovações:', 
+                value: document.getElementById('reprovedCount').textContent, 
+                color: '#dc2626' 
+            }
         ];
 
         rightCol.forEach(item => {
+            // Garantir que textos longos não sejam cortados
+            const label = pdf.splitTextToSize(item.label, rightLabelWidth);
+            const value = pdf.splitTextToSize(item.value || '', (contentWidth / 2) - rightLabelWidth - 10);
+
             pdf.setFont('helvetica', 'normal');
             pdf.setTextColor(75, 85, 99);
-            pdf.text(item.label, rightColX, currentY);
+            pdf.text(label, rightColX, currentY);
+            
             pdf.setFont('helvetica', 'bold');
             if (item.color) {
                 pdf.setTextColor(item.color);
+            } else {
+                pdf.setTextColor(75, 85, 99);
             }
-            pdf.text(item.value, rightColX + 50, currentY);
+            pdf.text(value, rightValueX, currentY);
+            
             currentY += 10;
         });
 
-        currentY += 10;
+        currentY += 15;
 
-        // Resumo do Card (subir mais)
-        currentY -= 25; // Aumentado de 10 para 25mm
-
-        // Box do Resumo
+        // Resumo do Card
         pdf.setFillColor(249, 250, 251);
-        pdf.rect(margin, currentY, contentWidth, 60, 'F'); // Aumentado altura de 50 para 60
+        pdf.rect(margin, currentY, contentWidth, 60, 'F');
 
         // Título da seção
         pdf.setTextColor(75, 85, 99);

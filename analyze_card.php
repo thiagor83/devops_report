@@ -285,6 +285,10 @@ try {
                 'title' => $item['fields']['System.Title'] ?? 'Card não encontrado',
                 'description' => $item['fields']['System.Description'] ?? '',
                 'status' => $item['fields']['System.State'],
+                'fields' => [
+                    'Expected Finish' => $item['fields']['Custom.c651c2bf-25c9-4ab4-bc20-0f80b9926661'] ?? null,
+                    'Effort' => $item['fields']['Microsoft.VSTS.Scheduling.Effort'] ?? null
+                ],
                 'productivity' => [
                     'created_date' => $productivityAnalysis['created_date'],
                     'dev_start' => $productivityAnalysis['dev_start'],
